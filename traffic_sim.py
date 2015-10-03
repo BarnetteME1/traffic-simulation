@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import matplotlib.pyplot as plt
 
 class Car():
 
@@ -39,15 +40,16 @@ class Car():
     def change_velocity(self):
         if self.distance_check():
             self.keep_distance()
-        if self.can_decelerate():
+        elif self.can_decelerate():
             self.decelerate()
         else:
             self.accelerate()
 
     def distance_check(self):
-        if self.in_front.location <= self.location + self.current_speed + 6:
+        if int(self.location + self.current_speed + 6) >= int(self.in_front.location):
             return True
-        return False
+        else:
+            return False
 
     def keep_distance(self):
         self.current_speed = self.in_front.current_speed
@@ -59,18 +61,16 @@ class Road():
 
 class Simulation:
 
-class Simulation:
-
     def __init__(self, num_cars = 30, length = 1000):
         self.num_cars = num_cars
         self.length = length
-        self.cars = self.create_cars()
+        self.cars = self.create_cars(self.num_cars)
 
-    def create_cars(self):
+    def create_cars(self, num_cars = 30):
         cars = []
-        locations = np.linspace(0, self.length - 33, self.num_cars)[::-1]
+        locations = np.linspace(0, self.length - 33, num_cars)[::-1]
         old_car = None
-        for num in range(self.num_cars):
+        for num in range(num_cars):
             new_car = Car(start_location = locations[num],
                           in_front = old_car)
             cars.append(new_car)
@@ -78,13 +78,24 @@ class Simulation:
             cars[0].in_front = cars[-1]
         return cars
 
-    def run_simulation(self):
-        for _ in range(60):
-            self.simulate()
-
     def simulate(self):
         for car in self.cars:
             car.move_forward
 
+
+    def run_simulation(self, times = 60):
+        full_report = []
+        time_slace = []
+        for _ in range(times):
+            full_report.append(self.report)
+            time_slace = [[x] * len(self.cars) for x in range(times)]
+            self.simulate()
+        return full_report, time_slace
+
+    @property
     def report(self):
-        return [car.location for car in self.cars]
+        return [car.location for car in self.cars][::-1]
+
+    def scatter(self, rounds = 60):
+        x, y = self.run_simulation(times = rounds)
+        return plt.scatter(x, y, c = ["red", "blue"], marker = "|")
