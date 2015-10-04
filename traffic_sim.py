@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+% matplotlib inline
 
 class Car():
 
@@ -38,15 +39,35 @@ class Car():
             self.current_speed -= 2
 
     def change_velocity(self):
-        if self.distance_check():
+        if self.too_close():
+            return self.breaks()
+        elif self.distance_check():
             self.keep_distance()
         elif self.can_decelerate():
             self.decelerate()
         else:
             self.accelerate()
 
+    def too_close(self):
+        future_location = self.location + self.current_speed + self.car_length + 2
+        if future_location > self.course_length:
+            future_location -= self.course_length
+        if future_location > self.in_front.location + self.in_front.current_speed + (
+            self.course_length - (self.course_length / 2)):
+            return False
+        if future_location > self.in_front.location + self.in_front.current_speed:
+            return True
+        else:
+            return False
+
+    def breaks(self):
+        self.current_speed = 0
+
     def distance_check(self):
-        if int(self.location + self.current_speed + 6) >= int(self.in_front.location):
+        distance = self.in_front.location - (self.location + self.car_length + 2)
+        if distance < 0:
+            distance += self.course_length
+        if distance <= self.current_speed:
             return True
         else:
             return False
@@ -54,10 +75,12 @@ class Car():
     def keep_distance(self):
         self.current_speed = self.in_front.current_speed
 
+
 class Road():
 
     def __init__(self, road_length = 1000):
         self.road_length = road_length
+
 
 class Simulation:
 
@@ -66,7 +89,7 @@ class Simulation:
         self.length = length
         self.cars = self.create_cars(self.num_cars)
 
-    def create_cars(self, num_cars = 30):
+    def create_cars(self, num_cars):
         cars = []
         locations = np.linspace(0, self.length - 33, num_cars)[::-1]
         old_car = None
@@ -94,8 +117,15 @@ class Simulation:
 
     @property
     def report(self):
-        return [car.location for car in self.cars][::-1]
+        return [int(car.location) for car in self.cars][::-1]
 
     def scatter(self, rounds = 60):
         x, y = self.run_simulation(times = rounds)
         return plt.scatter(x, y, c = ["red", "blue"], marker = "|")
+
+    @property
+    def speed_report(self):
+        car_speeds = []
+        for car in self.cars:
+            car_speeds.append(car.current_speed)
+        return car_speeds
